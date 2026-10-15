@@ -12,4 +12,17 @@
 /captures
 .externalNativeBuild
 .cxx
+# Android Studio / IntelliJ
+.idea/
+*.iml
 local.properties
+.gradle/
+
+# Сборки
+/build
+/app/build
+/app/release/
+*.apk
+*.aab
+output-metadata.json
+добавил, но уже успел загрузить APK
