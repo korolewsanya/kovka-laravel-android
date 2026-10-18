@@ -1,9 +1,11 @@
 package com.example.kovka;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -16,6 +18,7 @@ public class LoginActivity extends AppCompatActivity {
     private Button btnLogin;
     private ProgressBar progressBar;
     private TextView tvError;
+    private CheckBox cbAgree;
     private ApiClient apiClient;
     private TokenManager tokenManager;
 
@@ -29,9 +32,20 @@ public class LoginActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btnLogin);
         progressBar = findViewById(R.id.progressBar);
         tvError = findViewById(R.id.tvError);
+        cbAgree = findViewById(R.id.cbAgree);
 
         apiClient = ApiClient.getInstance(this);
         tokenManager = new TokenManager(this);
+
+        // Обработка клика по ссылке на политику конфиденциальности
+        TextView tvPrivacyLink = findViewById(R.id.tvPrivacyLink);
+        tvPrivacyLink.setOnClickListener(v -> {
+            // ВАЖНО: Укажите здесь реальный URL вашей страницы политики
+            // Если вы тестируете локально, это будет IP вашего компьютера
+            String privacyUrl = Config.BASE_URL + "privacy";
+            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl));
+            startActivity(browserIntent);
+        });
 
         // Если уже есть токен — сразу в AdminActivity
         if (tokenManager.hasToken()) {
@@ -44,6 +58,14 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin() {
+        // === ПРОВЕРКА ЧЕКБОКСА СОГЛАСИЯ ===
+        if (!cbAgree.isChecked()) {
+            tvError.setText("Необходимо согласие с политикой конфиденциальности");
+            tvError.setVisibility(View.VISIBLE);
+            return;
+        }
+        // ===================================
+
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
 

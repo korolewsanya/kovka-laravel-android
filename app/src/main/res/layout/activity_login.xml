@@ -41,6 +41,28 @@
         android:padding="16dp"
         android:background="@android:drawable/editbox_background" />
 
+    <!-- БЛОК СОГЛАСИЯ -->
+    <CheckBox
+        android:id="@+id/cbAgree"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Я соглашаюсь с политикой конфиденциальности"
+        android:textSize="14sp" />
+
+    <!-- Кликабельная ссылка на политику -->
+    <TextView
+        android:id="@+id/tvPrivacyLink"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Читать политику конфиденциальности"
+        android:textColor="#0000EE"
+        android:textStyle="bold"
+        android:textSize="14sp"
+        android:gravity="center"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="16dp" />
+
     <TextView
         android:id="@+id/tvError"
         android:layout_width="match_parent"

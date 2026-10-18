@@ -47,6 +47,11 @@ public class ApiClient {
             jsonBody.put("email", email);
             jsonBody.put("password", password);
 
+            // === ДОБАВЛЯЕМ ПЕРЕДАЧУ СОГЛАСИЯ С ПОЛИТИКОЙ КОНФИДЕНЦИАЛЬНОСТИ===
+            // Передаем 1 (единицу), что означает "true" для валидации Laravel
+            jsonBody.put("agree", 1);
+            // ===================================
+
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
                     response -> {
                         try {

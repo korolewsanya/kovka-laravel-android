@@ -15,11 +15,9 @@ public class Config {
     public static final String URL_DELETE = API_BASE + "orders/";
 
     public static String getImageUrl(String filename) {
-        // Если filename уже содержит products/, не добавляем повторно
         if (filename != null && filename.startsWith("products/")) {
             return STORAGE_BASE + filename;
         }
-        // Иначе добавляем products/
         return STORAGE_BASE + "products/" + filename;
     }
 }
