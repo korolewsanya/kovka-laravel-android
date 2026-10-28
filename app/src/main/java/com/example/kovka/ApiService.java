@@ -1,10 +1,10 @@
 package com.example.kovka;
 
 import android.content.Context;
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -18,10 +18,12 @@ public class ApiService {
     private static ApiService instance;
     private RequestQueue requestQueue;
     private Gson gson;
+    private TokenManager tokenManager; // <-- ДОБАВЛЕНО
 
     private ApiService(Context context) {
         requestQueue = Volley.newRequestQueue(context);
         gson = new Gson();
+        tokenManager = new TokenManager(context); // <-- ДОБАВЛЕНО
     }
 
     public static synchronized ApiService getInstance(Context context) {
@@ -29,6 +31,16 @@ public class ApiService {
             instance = new ApiService(context);
         }
         return instance;
+    }
+
+    // <-- ДОБАВЛЕН ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ЗАГОЛОВКОВ -->
+    private Map<String, String> getAuthHeaders() {
+        Map<String, String> headers = new HashMap<>();
+        String token = tokenManager.getToken();
+        if (token != null && !token.isEmpty()) {
+            headers.put("Authorization", "Bearer " + token);
+        }
+        return headers;
     }
 
     public interface ImageListCallback {
@@ -77,14 +89,18 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
 
     // DELETE /api/images/delete?filename=xxx - удаление изображения
     public void deleteImage(String filename, SimpleCallback callback) {
-        // Параметр filename передаем в URL
         String url = EndPoints.DELETE_URL + "?filename=" + filename;
 
         JsonObjectRequest request = new JsonObjectRequest(
@@ -112,7 +128,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
@@ -158,7 +179,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
@@ -203,7 +229,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
@@ -253,7 +284,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
@@ -303,7 +339,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }
@@ -337,7 +378,12 @@ public class ApiService {
                     }
                     callback.onError(errorMsg);
                 }
-        );
+        ) {
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return getAuthHeaders();
+            }
+        };
 
         requestQueue.add(request);
     }

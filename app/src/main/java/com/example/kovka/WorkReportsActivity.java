@@ -3,6 +3,7 @@ package com.example.kovka;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class WorkReportsActivity extends AppCompatActivity {
+    private static final String TAG = "IMG_DEBUG";
     private static final String JSON_URL = Config.API_BASE + "work-reports";
     private static final int REQUEST_SAVE_REPORT = 1;
     private static final int REQUEST_UPDATE_REPORT = 2;
@@ -86,6 +88,9 @@ public class WorkReportsActivity extends AppCompatActivity {
                                     final String imageFileName = selected.optString("image");
                                     final String date = selected.optString("date");
 
+                                    Log.d(TAG, "id=" + recordId + " image=[" + imageFileName + "] len=" +
+                                            (imageFileName == null ? -1 : imageFileName.length()));
+
                                     AlertDialog.Builder builder = new AlertDialog.Builder(WorkReportsActivity.this);
                                     builder.setTitle("Действие с отчетом");
                                     builder.setItems(new String[]{"Изменить", "Удалить", "Посмотреть изображение"},
@@ -102,7 +107,9 @@ public class WorkReportsActivity extends AppCompatActivity {
                                                 } else if (which == 1) {
                                                     showDeleteConfirmation(recordId);
                                                 } else if (which == 2) {
-                                                    if (imageFileName != null && !imageFileName.isEmpty()) {
+                                                    if (imageFileName != null
+                                                            && !imageFileName.trim().isEmpty()
+                                                            && !"null".equalsIgnoreCase(imageFileName.trim())) {
                                                         showImageDialog(imageFileName);
                                                     } else {
                                                         Toast.makeText(WorkReportsActivity.this,
@@ -145,8 +152,47 @@ public class WorkReportsActivity extends AppCompatActivity {
     }
 
     private void showImageDialog(String imageFileName) {
-        String baseUrl = Config.STORAGE_BASE;
-        String fullUrl = baseUrl + imageFileName;
+        if (imageFileName == null) imageFileName = "";
+        imageFileName = imageFileName.trim();
+
+        if (imageFileName.isEmpty() || "null".equalsIgnoreCase(imageFileName)) {
+            Toast.makeText(this, "Для этого отчета нет изображения", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String fullUrl;
+
+        if (imageFileName.startsWith("data:image")) {
+            // base64 data-URI — Glide грузит напрямую
+            fullUrl = imageFileName;
+        } else if (imageFileName.startsWith("http://") || imageFileName.startsWith("https://")) {
+            // уже полный URL
+            fullUrl = imageFileName;
+        } else {
+            String baseUrl = Config.STORAGE_BASE;
+            if (!baseUrl.endsWith("/")) baseUrl += "/";
+
+            while (imageFileName.startsWith("/")) {
+                imageFileName = imageFileName.substring(1);
+            }
+
+            // ПРОВЕРКА НА "products/": если уже есть — не добавляем, если нет — добавляем
+            String path;
+            if (imageFileName.startsWith("products/")) {
+                path = imageFileName;
+            } else {
+                path = "products/" + imageFileName;
+            }
+
+            // кодируем пробелы/кириллицу в имени файла (не трогаем уже закодированное)
+            if (!path.matches(".*%[0-9A-Fa-f]{2}.*")) {
+                path = android.net.Uri.encode(path, "/");
+            }
+
+            fullUrl = baseUrl + path;
+        }
+
+        Log.d(TAG, "open image fullUrl=" + fullUrl);
 
         Intent intent = new Intent(WorkReportsActivity.this, ImageFullScreenActivity.class);
         intent.putExtra(ImageFullScreenActivity.EXTRA_IMAGE_URL, fullUrl);
@@ -223,7 +269,6 @@ public class WorkReportsActivity extends AppCompatActivity {
         if (item.getItemId() == R.id.ot) {
             // создание нового отчета - без ID
             Intent intent = new Intent(this, WorkReportsSaveActivity.class);
-            // если не передаем "idi" - значит это создание нового
             startActivityForResult(intent, REQUEST_SAVE_REPORT);
             return true;
         }
