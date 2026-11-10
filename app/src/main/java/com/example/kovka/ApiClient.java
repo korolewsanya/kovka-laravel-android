@@ -46,11 +46,7 @@ public class ApiClient {
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("email", email);
             jsonBody.put("password", password);
-
-            // === ДОБАВЛЯЕМ ПЕРЕДАЧУ СОГЛАСИЯ С ПОЛИТИКОЙ КОНФИДЕНЦИАЛЬНОСТИ===
-            // Передаем 1 (единицу), что означает "true" для валидации Laravel
-            jsonBody.put("agree", 1);
-            // ===================================
+            jsonBody.put("agree", 1); // Согласие с политикой
 
             JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, jsonBody,
                     response -> {
@@ -61,14 +57,12 @@ public class ApiClient {
                             loginResponse.error = response.optBoolean("error", false);
                             loginResponse.message = response.optString("message", "");
 
-                            // Получаем данные
                             JSONObject data = response.optJSONObject("data");
                             if (data != null) {
                                 loginResponse.data = new LoginData();
                                 loginResponse.data.token = data.optString("token", "");
                                 loginResponse.data.role = data.optString("role", "");
 
-                                // Сохраняем токен
                                 if (!loginResponse.data.token.isEmpty()) {
                                     tokenManager.saveToken(loginResponse.data.token);
                                 }
@@ -85,15 +79,24 @@ public class ApiClient {
                     },
                     error -> {
                         String message = "Ошибка соединения. Попробуйте позже.";
-                        if (error.networkResponse != null && error.networkResponse.data != null) {
-                            try {
-                                String responseBody = new String(error.networkResponse.data, "UTF-8");
-                                Log.e(TAG, "Ошибка ответа: " + responseBody);
-                                JSONObject jsonError = new JSONObject(responseBody);
-                                if (jsonError.has("message")) {
-                                    message = jsonError.getString("message");
+                        if (error.networkResponse != null) {
+                            int statusCode = error.networkResponse.statusCode;
+
+                            // === ОБРАБОТКА 429 (TOO MANY REQUESTS) ===
+                            if (statusCode == 429) {
+                                message = "Слишком много попыток входа. Подождите 30 минут.";
+                                Log.w(TAG, "Rate limit exceeded: " + statusCode);
+                            } else if (error.networkResponse.data != null) {
+                                try {
+                                    String responseBody = new String(error.networkResponse.data, "UTF-8");
+                                    Log.e(TAG, "Ошибка ответа: " + responseBody);
+                                    JSONObject jsonError = new JSONObject(responseBody);
+                                    if (jsonError.has("message")) {
+                                        message = jsonError.getString("message");
+                                    }
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Ошибка парсинга ответа: " + e.getMessage());
                                 }
-                            } catch (Exception e) {
                             }
                         }
                         callback.onError(message);
@@ -169,7 +172,10 @@ public class ApiClient {
                         int statusCode = error.networkResponse.statusCode;
                         Log.e(TAG, "Код ошибки: " + statusCode);
 
-                        if (statusCode >= 200 && statusCode < 300) {
+                        // === ОБРАБОТКА 429 В ОБЩЕМ МЕТОДЕ ===
+                        if (statusCode == 429) {
+                            errorMsg = "Слишком много запросов. Подождите.";
+                        } else if (statusCode >= 200 && statusCode < 300) {
                             Log.d(TAG, "Запрос успешен, но парсинг ответа не удался");
                             if (callback != null) {
                                 try {

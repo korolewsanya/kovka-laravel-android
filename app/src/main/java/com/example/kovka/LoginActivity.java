@@ -37,17 +37,13 @@ public class LoginActivity extends AppCompatActivity {
         apiClient = ApiClient.getInstance(this);
         tokenManager = new TokenManager(this);
 
-        // Обработка клика по ссылке на политику конфиденциальности
         TextView tvPrivacyLink = findViewById(R.id.tvPrivacyLink);
         tvPrivacyLink.setOnClickListener(v -> {
-            // ВАЖНО: Укажите здесь реальный URL вашей страницы политики
-            // Если вы тестируете локально, это будет IP вашего компьютера
             String privacyUrl = Config.BASE_URL + "privacy";
             Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(privacyUrl));
             startActivity(browserIntent);
         });
 
-        // Если уже есть токен — сразу в AdminActivity
         if (tokenManager.hasToken()) {
             startActivity(new Intent(this, AdminActivity.class));
             finish();
@@ -58,13 +54,12 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void performLogin() {
-        // === ПРОВЕРКА ЧЕКБОКСА СОГЛАСИЯ ===
+        // Проверка чекбокса
         if (!cbAgree.isChecked()) {
             tvError.setText("Необходимо согласие с политикой конфиденциальности");
             tvError.setVisibility(View.VISIBLE);
             return;
         }
-        // ===================================
 
         String email = etEmail.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
@@ -92,16 +87,12 @@ public class LoginActivity extends AppCompatActivity {
                 btnLogin.setEnabled(true);
 
                 if (result.data != null) {
-                    // Сохраняем токен
                     tokenManager.saveToken(result.data.token);
-
-                    // Сохраняем роль (admin или employee)
                     String role = result.data.role != null ? result.data.role : "employee";
                     tokenManager.saveRole(role);
 
                     Toast.makeText(LoginActivity.this, "Добро пожаловать!", Toast.LENGTH_SHORT).show();
 
-                    // Все пользователи идут в AdminActivity
                     Intent intent = new Intent(LoginActivity.this, AdminActivity.class);
                     startActivity(intent);
                     finish();
@@ -115,6 +106,9 @@ public class LoginActivity extends AppCompatActivity {
             public void onError(String error) {
                 progressBar.setVisibility(View.GONE);
                 btnLogin.setEnabled(true);
+
+                // Если ошибка содержит признак блокировки (429), выводим её как есть
+                // ApiClient должен возвращать текст вроде "Слишком много попыток. Подождите..."
                 tvError.setText(error);
                 tvError.setVisibility(View.VISIBLE);
             }
